@@ -31,8 +31,10 @@ interface TMDBListResponse {
   total_pages: number;
 }
 
-export async function getTrendingMovies(): Promise<Movie[]> {
-  const data = await tmdbFetch<TMDBListResponse>("/trending/movie/week");
+export async function getTrendingMovies(page = 1): Promise<Movie[]> {
+  const data = await tmdbFetch<TMDBListResponse>("/trending/movie/week", {
+    page: String(page),
+  });
   return data.results;
 }
 

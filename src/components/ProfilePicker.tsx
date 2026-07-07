@@ -18,7 +18,7 @@ export default function ProfilePicker() {
         Quem está assistindo?
       </p>
 
-      <div className="grid w-full max-w-lg grid-cols-2 gap-6 sm:flex sm:max-w-none sm:gap-8">
+      <div className="grid w-full max-w-lg grid-cols-2 justify-items-center gap-6 sm:flex sm:max-w-none sm:justify-center sm:gap-8">
         {PROFILES.map((profile) => (
           <Link
             key={profile.name}

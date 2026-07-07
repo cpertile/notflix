@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   CATEGORIES,
   getBaseCategoryId,
@@ -19,15 +19,16 @@ async function fetchRow(categoryId: string, genreId?: number): Promise<Movie[]> 
   const page = getCategoryPage(categoryId);
   const baseId = getBaseCategoryId(categoryId);
 
-  if (baseId === "trending") {
-    const res = await fetch("/api/movies/trending");
-    const data = await res.json();
-    return data.movies ?? [];
+  const url =
+    baseId === "trending"
+      ? `/api/movies/trending?page=${page}`
+      : `/api/movies/discover?genreId=${genreId ?? CATEGORIES.find((c) => c.id === baseId)?.genreId}&page=${page}`;
+
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch row: ${res.status}`);
   }
 
-  const res = await fetch(
-    `/api/movies/discover?genreId=${genreId ?? CATEGORIES.find((c) => c.id === baseId)?.genreId}&page=${page}`
-  );
   const data = await res.json();
   return data.movies ?? [];
 }
@@ -36,30 +37,39 @@ export default function BrowsePage() {
   const [heroMovie, setHeroMovie] = useState<Movie | null>(null);
   const [rows, setRows] = useState<MovieRowData[]>([]);
   const [rowIndex, setRowIndex] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [playingMovie, setPlayingMovie] = useState<Movie | null>(null);
   const [searchResults, setSearchResults] = useState<Movie[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const loadingRef = useRef(false);
 
   const loadRows = useCallback(async (startIndex: number, count: number) => {
+    if (loadingRef.current) return;
+
+    loadingRef.current = true;
     setIsLoading(true);
-    const batch = getCategoryBatch(startIndex, count);
 
-    const newRows = await Promise.all(
-      batch.map(async (category) => {
-        const movies = await fetchRow(category.id, category.genreId);
-        return { id: category.id, title: category.title, movies };
-      })
-    );
+    try {
+      const batch = getCategoryBatch(startIndex, count);
 
-    setRows((prev) => {
-      const existingIds = new Set(prev.map((r) => r.id));
-      const unique = newRows.filter((r) => !existingIds.has(r.id));
-      return [...prev, ...unique];
-    });
-    setRowIndex(startIndex + count);
-    setIsLoading(false);
+      const newRows = await Promise.all(
+        batch.map(async (category) => {
+          const movies = await fetchRow(category.id, category.genreId);
+          return { id: category.id, title: category.title, movies };
+        })
+      );
+
+      setRows((prev) => {
+        const existingIds = new Set(prev.map((r) => r.id));
+        const unique = newRows.filter((r) => !existingIds.has(r.id));
+        return [...prev, ...unique];
+      });
+      setRowIndex(startIndex + count);
+    } finally {
+      loadingRef.current = false;
+      setIsLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -143,7 +153,7 @@ export default function BrowsePage() {
       <InfiniteScroll
         onLoadMore={() => loadRows(rowIndex, 3)}
         isLoading={isLoading}
-        hasMore={hasMore}
+        hasMore={hasMore && rowIndex > 0}
       />
 
       {selectedMovie && (
