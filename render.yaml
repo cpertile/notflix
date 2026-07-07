@@ -3,8 +3,11 @@ services:
     name: notflix
     runtime: node
     plan: free
+    repo: https://github.com/cpertile/notflix
+    branch: main
     buildCommand: npm install && npm run build
     startCommand: npm start
+    autoDeployTrigger: commit
     envVars:
       - key: NODE_ENV
         value: production
