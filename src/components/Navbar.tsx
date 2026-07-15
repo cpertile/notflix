@@ -119,13 +119,13 @@ export default function Navbar({
             </Link>
 
             <div className="hidden items-center gap-5 text-sm text-gray-300 md:flex">
-              <Link href="/browse" className="transition hover:text-white">
+              <Link href="/browse" className="cursor-pointer transition hover:text-white">
                 Início
               </Link>
-              <span className="cursor-default transition hover:text-white">Séries</span>
-              <span className="cursor-default transition hover:text-white">Filmes</span>
-              <span className="cursor-default transition hover:text-white">Bombando</span>
-              <span className="cursor-default transition hover:text-white">Minha lista</span>
+              <span className="cursor-pointer transition hover:text-white">Séries</span>
+              <span className="cursor-pointer transition hover:text-white">Filmes</span>
+              <span className="cursor-pointer transition hover:text-white">Bombando</span>
+              <span className="cursor-pointer transition hover:text-white">Minha lista</span>
             </div>
           </div>
 
@@ -182,13 +182,13 @@ export default function Navbar({
               </svg>
             </button>
             <div className="flex flex-col gap-4 text-lg text-gray-300">
-              <Link href="/browse" onClick={() => setMenuOpen(false)} className="hover:text-white">
+              <Link href="/browse" onClick={() => setMenuOpen(false)} className="cursor-pointer hover:text-white">
                 Início
               </Link>
-              <span className="hover:text-white">Séries</span>
-              <span className="hover:text-white">Filmes</span>
-              <span className="hover:text-white">Bombando</span>
-              <span className="hover:text-white">Minha lista</span>
+              <span className="cursor-pointer hover:text-white">Séries</span>
+              <span className="cursor-pointer hover:text-white">Filmes</span>
+              <span className="cursor-pointer hover:text-white">Bombando</span>
+              <span className="cursor-pointer hover:text-white">Minha lista</span>
             </div>
           </div>
         </div>
