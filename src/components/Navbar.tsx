@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { parseStoredProfile, PROFILE_STORAGE_KEY, Profile, PROFILES } from "@/lib/profiles";
 import { Movie } from "@/lib/types";
 import tmdbLoader from "@/lib/tmdb-image-loader";
 
@@ -11,18 +12,32 @@ interface NavbarProps {
   searchResults: Movie[];
   onSelectMovie: (movie: Movie) => void;
   isSearching: boolean;
+  profile?: Profile | null;
 }
 
-export default function Navbar({ onSearch, searchResults, onSelectMovie, isSearching }: NavbarProps) {
+export default function Navbar({
+  onSearch,
+  searchResults,
+  onSelectMovie,
+  isSearching,
+  profile: profileProp,
+}: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [scrolled, setScrolled] = useState(false);
+  const [storedProfile, setStoredProfile] = useState<Profile | null>(null);
+
+  const profile = profileProp ?? storedProfile ?? PROFILES[0];
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 0);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    setStoredProfile(parseStoredProfile(localStorage.getItem(PROFILE_STORAGE_KEY)));
   }, []);
 
   useEffect(() => {
@@ -127,8 +142,12 @@ export default function Navbar({ onSearch, searchResults, onSelectMovie, isSearc
 
             <div className="hidden md:block">{searchPanel}</div>
 
-            <Link href="/" className="flex h-8 w-8 items-center justify-center rounded bg-blue-600 text-sm">
-              😎
+            <Link
+              href="/"
+              className={`flex h-8 w-8 items-center justify-center rounded text-sm ${profile.color}`}
+              aria-label={`Perfil ${profile.name}`}
+            >
+              {profile.emoji}
             </Link>
           </div>
         </div>

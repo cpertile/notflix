@@ -1,11 +1,7 @@
-import Link from "next/link";
+"use client";
 
-const PROFILES = [
-  { name: "Você", emoji: "😎", color: "bg-blue-600" },
-  { name: "Crianças", emoji: "🧒", color: "bg-yellow-500" },
-  { name: "Convidado", emoji: "👤", color: "bg-green-600" },
-  { name: "Pet", emoji: "🐶", color: "bg-purple-600" },
-];
+import Link from "next/link";
+import { PROFILE_STORAGE_KEY, PROFILES } from "@/lib/profiles";
 
 export default function ProfilePicker() {
   return (
@@ -21,9 +17,12 @@ export default function ProfilePicker() {
       <div className="grid w-full max-w-lg grid-cols-2 justify-items-center gap-6 sm:flex sm:max-w-none sm:justify-center sm:gap-8">
         {PROFILES.map((profile) => (
           <Link
-            key={profile.name}
+            key={profile.id}
             href="/browse"
             className="group flex flex-col items-center gap-3 transition-transform hover:scale-105"
+            onClick={() => {
+              localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+            }}
           >
             <div
               className={`flex h-20 w-20 items-center justify-center rounded-md text-3xl sm:h-28 sm:w-28 sm:text-5xl ${profile.color} ring-2 ring-transparent transition group-hover:ring-white`}

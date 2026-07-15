@@ -15,12 +15,25 @@ export const CATEGORIES: Category[] = [
   { id: "crime", title: "Crime", genreId: 80 },
 ];
 
-export function getCategoryBatch(startIndex: number, count: number): Category[] {
+export const KIDS_CATEGORIES: Category[] = [
+  { id: "trending", title: "Em Alta" },
+  { id: "animation", title: "Animação", genreId: 16 },
+  { id: "family", title: "Família", genreId: 10751 },
+  { id: "comedy", title: "Comédia", genreId: 35 },
+  { id: "adventure", title: "Aventura", genreId: 12 },
+  { id: "fantasy", title: "Fantasia", genreId: 14 },
+];
+
+export function getCategoryBatch(
+  startIndex: number,
+  count: number,
+  categories: Category[] = CATEGORIES
+): Category[] {
   const result: Category[] = [];
   for (let i = 0; i < count; i++) {
-    const index = (startIndex + i) % CATEGORIES.length;
-    const category = CATEGORIES[index];
-    const page = Math.floor((startIndex + i) / CATEGORIES.length) + 1;
+    const index = (startIndex + i) % categories.length;
+    const category = categories[index];
+    const page = Math.floor((startIndex + i) / categories.length) + 1;
     result.push({
       ...category,
       id: `${category.id}-${page}`,

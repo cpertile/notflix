@@ -31,29 +31,65 @@ interface TMDBListResponse {
   total_pages: number;
 }
 
-export async function getTrendingMovies(page = 1): Promise<Movie[]> {
+type FetchOptions = {
+  kids?: boolean;
+};
+
+function kidsDiscoverParams(): Record<string, string> {
+  return {
+    include_adult: "false",
+    certification_country: "US",
+    "certification.lte": "PG",
+  };
+}
+
+export async function getTrendingMovies(page = 1, options: FetchOptions = {}): Promise<Movie[]> {
+  if (options.kids) {
+    const data = await tmdbFetch<TMDBListResponse>("/discover/movie", {
+      with_genres: "16|10751",
+      sort_by: "popularity.desc",
+      page: String(page),
+      ...kidsDiscoverParams(),
+    });
+    return data.results;
+  }
+
   const data = await tmdbFetch<TMDBListResponse>("/trending/movie/week", {
     page: String(page),
   });
   return data.results;
 }
 
-export async function discoverMoviesByGenre(genreId: number, page = 1): Promise<Movie[]> {
+export async function discoverMoviesByGenre(
+  genreId: number,
+  page = 1,
+  options: FetchOptions = {}
+): Promise<Movie[]> {
   const data = await tmdbFetch<TMDBListResponse>("/discover/movie", {
     with_genres: String(genreId),
     sort_by: "popularity.desc",
     page: String(page),
+    ...(options.kids ? kidsDiscoverParams() : {}),
   });
   return data.results;
 }
 
-export async function searchMovies(query: string): Promise<Movie[]> {
+export async function searchMovies(query: string, options: FetchOptions = {}): Promise<Movie[]> {
   if (!query.trim()) return [];
   const data = await tmdbFetch<TMDBListResponse>("/search/movie", {
     query: query.trim(),
     page: "1",
+    ...(options.kids ? { include_adult: "false" } : {}),
   });
-  return data.results;
+
+  if (!options.kids) {
+    return data.results;
+  }
+
+  const blockedGenres = new Set([27, 53, 80, 10749]);
+  return data.results.filter(
+    (movie) => !(movie.genre_ids ?? []).some((genreId) => blockedGenres.has(genreId))
+  );
 }
 
 export async function getMovieDetails(id: number): Promise<MovieDetails & { cast: CastMember[] }> {

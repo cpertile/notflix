@@ -6,7 +6,15 @@ import {
   getBaseCategoryId,
   getCategoryBatch,
   getCategoryPage,
+  KIDS_CATEGORIES,
 } from "@/lib/categories";
+import {
+  isKidsProfile,
+  parseStoredProfile,
+  PROFILE_STORAGE_KEY,
+  Profile,
+  PROFILES,
+} from "@/lib/profiles";
 import { Movie, MovieRowData } from "@/lib/types";
 import FakePlayer from "@/components/FakePlayer";
 import HeroBanner from "@/components/HeroBanner";
@@ -15,14 +23,20 @@ import MovieModal from "@/components/MovieModal";
 import MovieRow from "@/components/MovieRow";
 import Navbar from "@/components/Navbar";
 
-async function fetchRow(categoryId: string, genreId?: number): Promise<Movie[]> {
+async function fetchRow(
+  categoryId: string,
+  genreId: number | undefined,
+  categories: typeof CATEGORIES,
+  kids: boolean
+): Promise<Movie[]> {
   const page = getCategoryPage(categoryId);
   const baseId = getBaseCategoryId(categoryId);
+  const kidsParam = kids ? "&kids=1" : "";
 
   const url =
     baseId === "trending"
-      ? `/api/movies/trending?page=${page}`
-      : `/api/movies/discover?genreId=${genreId ?? CATEGORIES.find((c) => c.id === baseId)?.genreId}&page=${page}`;
+      ? `/api/movies/trending?page=${page}${kidsParam}`
+      : `/api/movies/discover?genreId=${genreId ?? categories.find((c) => c.id === baseId)?.genreId}&page=${page}${kidsParam}`;
 
   const res = await fetch(url);
   if (!res.ok) {
@@ -34,6 +48,8 @@ async function fetchRow(categoryId: string, genreId?: number): Promise<Movie[]> 
 }
 
 export default function BrowsePage() {
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profileReady, setProfileReady] = useState(false);
   const [heroMovie, setHeroMovie] = useState<Movie | null>(null);
   const [rows, setRows] = useState<MovieRowData[]>([]);
   const [rowIndex, setRowIndex] = useState(0);
@@ -44,40 +60,61 @@ export default function BrowsePage() {
   const [isSearching, setIsSearching] = useState(false);
   const loadingRef = useRef(false);
 
-  const loadRows = useCallback(async (startIndex: number, count: number) => {
-    if (loadingRef.current) return;
-
-    loadingRef.current = true;
-    setIsLoading(true);
-
-    try {
-      const batch = getCategoryBatch(startIndex, count);
-
-      const newRows = await Promise.all(
-        batch.map(async (category) => {
-          const movies = await fetchRow(category.id, category.genreId);
-          return { id: category.id, title: category.title, movies };
-        })
-      );
-
-      setRows((prev) => {
-        const existingIds = new Set(prev.map((r) => r.id));
-        const unique = newRows.filter((r) => !existingIds.has(r.id));
-        return [...prev, ...unique];
-      });
-      setRowIndex(startIndex + count);
-    } finally {
-      loadingRef.current = false;
-      setIsLoading(false);
-    }
-  }, []);
+  const kids = isKidsProfile(profile);
+  const categories = kids ? KIDS_CATEGORIES : CATEGORIES;
 
   useEffect(() => {
+    const parsed = parseStoredProfile(localStorage.getItem(PROFILE_STORAGE_KEY)) ?? PROFILES[0];
+    setProfile(parsed);
+    setProfileReady(true);
+  }, []);
+
+  const loadRows = useCallback(
+    async (startIndex: number, count: number) => {
+      if (loadingRef.current) return;
+
+      loadingRef.current = true;
+      setIsLoading(true);
+
+      try {
+        const batch = getCategoryBatch(startIndex, count, categories);
+
+        const newRows = await Promise.all(
+          batch.map(async (category) => {
+            const movies = await fetchRow(category.id, category.genreId, categories, kids);
+            return { id: category.id, title: category.title, movies };
+          })
+        );
+
+        setRows((prev) => {
+          const existingIds = new Set(prev.map((r) => r.id));
+          const unique = newRows.filter((r) => !existingIds.has(r.id));
+          return [...prev, ...unique];
+        });
+        setRowIndex(startIndex + count);
+      } finally {
+        loadingRef.current = false;
+        setIsLoading(false);
+      }
+    },
+    [categories, kids]
+  );
+
+  useEffect(() => {
+    if (!profileReady || !profile) return;
+
     let cancelled = false;
+    loadingRef.current = false;
+    setRows([]);
+    setRowIndex(0);
+    setHeroMovie(null);
+    setSelectedMovie(null);
+    setSearchResults([]);
 
     async function init() {
       try {
-        const res = await fetch("/api/movies/trending");
+        const trendingUrl = kids ? "/api/movies/trending?kids=1" : "/api/movies/trending";
+        const res = await fetch(trendingUrl);
         const data = await res.json();
         if (!cancelled && data.movies?.length > 0) {
           setHeroMovie(data.movies[0]);
@@ -96,30 +133,34 @@ export default function BrowsePage() {
     return () => {
       cancelled = true;
     };
-  }, [loadRows]);
+  }, [profileReady, profile, kids, loadRows]);
 
-  const handleSearch = useCallback(async (query: string) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      return;
-    }
-    setIsSearching(true);
-    try {
-      const res = await fetch(`/api/movies/search?q=${encodeURIComponent(query)}`);
-      const data = await res.json();
-      setSearchResults(data.movies ?? []);
-    } catch {
-      setSearchResults([]);
-    }
-    setIsSearching(false);
-  }, []);
+  const handleSearch = useCallback(
+    async (query: string) => {
+      if (!query.trim()) {
+        setSearchResults([]);
+        return;
+      }
+      setIsSearching(true);
+      try {
+        const kidsParam = kids ? "&kids=1" : "";
+        const res = await fetch(`/api/movies/search?q=${encodeURIComponent(query)}${kidsParam}`);
+        const data = await res.json();
+        setSearchResults(data.movies ?? []);
+      } catch {
+        setSearchResults([]);
+      }
+      setIsSearching(false);
+    },
+    [kids]
+  );
 
   const handlePlay = (movie: Movie) => {
     setSelectedMovie(null);
     setPlayingMovie(movie);
   };
 
-  const hasMore = rowIndex < CATEGORIES.length * 5;
+  const hasMore = rowIndex < categories.length * 5;
 
   return (
     <main className="min-h-dvh bg-[#141414] pb-8">
@@ -128,6 +169,7 @@ export default function BrowsePage() {
         searchResults={searchResults}
         onSelectMovie={setSelectedMovie}
         isSearching={isSearching}
+        profile={profile}
       />
 
       {heroMovie && (
