@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { Movie } from "@/lib/types";
+import tmdbLoader from "@/lib/tmdb-image-loader";
 
 interface HeroBannerProps {
   movie: Movie;
@@ -11,7 +12,7 @@ interface HeroBannerProps {
 
 export default function HeroBanner({ movie, onPlay, onInfo }: HeroBannerProps) {
   const backdrop = movie.backdrop_path
-    ? `https://image.tmdb.org/t/p/w1280${movie.backdrop_path}`
+    ? `https://image.tmdb.org/t/p/w780${movie.backdrop_path}`
     : null;
 
   return (
@@ -22,6 +23,7 @@ export default function HeroBanner({ movie, onPlay, onInfo }: HeroBannerProps) {
           alt={movie.title}
           fill
           priority
+          loader={tmdbLoader}
           className="object-cover"
           sizes="100vw"
         />

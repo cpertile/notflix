@@ -21,7 +21,7 @@ export default function InfiniteScroll({ onLoadMore, isLoading, hasMore }: Infin
           onLoadMore();
         }
       },
-      { rootMargin: "400px" }
+      { rootMargin: "120px" }
     );
 
     observer.observe(sentinel);

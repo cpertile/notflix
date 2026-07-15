@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { CastMember, Movie, MovieDetails } from "@/lib/types";
+import tmdbLoader from "@/lib/tmdb-image-loader";
 
 interface MovieModalProps {
   movie: Movie;
@@ -55,6 +56,7 @@ export default function MovieModal({ movie, onClose, onPlay }: MovieModalProps) 
                 src={poster}
                 alt={movie.title}
                 fill
+                loader={tmdbLoader}
                 className="rounded object-cover"
                 sizes="192px"
               />

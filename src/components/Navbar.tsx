@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Movie } from "@/lib/types";
+import tmdbLoader from "@/lib/tmdb-image-loader";
 
 interface NavbarProps {
   onSearch: (query: string) => void;
@@ -64,6 +65,7 @@ export default function Navbar({ onSearch, searchResults, onSelectMovie, isSearc
                     alt={movie.title}
                     width={40}
                     height={60}
+                    loader={tmdbLoader}
                     className="rounded object-cover"
                   />
                 ) : (
