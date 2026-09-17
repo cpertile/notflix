@@ -13,3 +13,4 @@ Uma piada para os tempos modernos: a plataforma onde você pode scrollar infinit
 - Next.js + TypeScript
 - Tailwind CSS
 - TMDB API
+- Vercel
