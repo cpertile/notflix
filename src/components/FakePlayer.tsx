@@ -71,7 +71,7 @@ export default function FakePlayer({ movie, onClose }: FakePlayerProps) {
       <div className="relative flex-1">
         {backdrop && (
           <div
-            className="absolute inset-0 bg-cover bg-center opacity-20"
+            className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-20"
             style={{ backgroundImage: `url(${backdrop})` }}
           />
         )}
@@ -86,7 +86,7 @@ export default function FakePlayer({ movie, onClose }: FakePlayerProps) {
           </svg>
         </button>
 
-        <div className="flex h-full flex-col items-center justify-center px-6">
+        <div className="relative z-10 flex h-full flex-col items-center justify-center px-6">
           {state === "buffering" && (
             <>
               <div className="mb-6 h-12 w-12 animate-spin rounded-full border-4 border-white/20 border-t-notflix-red" />
@@ -100,8 +100,9 @@ export default function FakePlayer({ movie, onClose }: FakePlayerProps) {
               <div className="mb-4 text-5xl">⚠️</div>
               <p className="mb-6 text-lg text-gray-200 md:text-xl">{errorMessage}</p>
               <button
+                type="button"
                 onClick={startBuffering}
-                className="min-h-[44px] rounded bg-white px-8 py-3 font-semibold text-black transition hover:bg-gray-200"
+                className="relative z-10 min-h-[44px] cursor-pointer rounded bg-white px-8 py-3 font-semibold text-black transition hover:bg-gray-200"
               >
                 Tentar novamente
               </button>
